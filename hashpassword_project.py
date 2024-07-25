@@ -2,27 +2,26 @@ import os
 import hashlib
 from pathlib import Path
 
-def read_hashes_from_directory(directory):
+def read_hashes_from_file(hashfile):
 # read hashes from all files in directory
 
 	hashes = set()#set to store unique hashes
-	for root, _, files in os.walk(directory):	
-		for file in files:
-			 #iterate through the files
-			file_path = os.path.join(root, file)
-			try:
-				with open(file_path, 'r') as f:
-					lines = f.readlines()
-					print(f"reading{len(lines)}lines from file {file_path}")
-					for line in lines:
-						#add each line (hashed_password to set
-						stripped_line = line.strip()
-						if stripped_line:
-							hashes.add(stripped_line)
+	try:
+		with open(hashfile, 'r') as f:
+			#open the file for reading
+			lines = f.readlines()
+			print(f"reading{len(lines)}lines from file {hashfile}")
+			for line in lines:
+			#add each line (hashed_password to set
+				stripped_line = line.strip()
+					#stripping any whitespaces
+				if stripped_line:
+					#if hash not empty, add it to the set
+					hashes.add(stripped_line)
 					
-			except Exception as e:
-				print(f"Error reading file{file_path}: {e}")
-	print(f"total hashes read from {directory}:{len(hashes)}")
+	except Exception as e:
+		print(f"Error reading file{hashfile}: {e}")
+	print(f"total hashes read from {hashfile}:{len(hashes)}")
 	return hashes
 
 def find_leaked_passwords(active_directory, leaked_directory):
@@ -31,8 +30,8 @@ def find_leaked_passwords(active_directory, leaked_directory):
 
 	
 	#reading hashes from both directories
-	activedir_hashes = read_hashes_from_directory(active_directory)#might need to change the name of this directory
-	pwned_hashes= read_hashes_from_directory(leaked_directory)
+	activedir_hashes = read_hashes_from_file(active_directory)#might need to change the name of this directory
+	pwned_hashes= read_hashes_from_file(leaked_directory)
 
    
    
