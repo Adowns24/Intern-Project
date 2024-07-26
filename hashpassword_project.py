@@ -1,5 +1,6 @@
 import os
 import hashlib
+import sqlite3
 from pathlib import Path
 
 def read_hashes_from_file(hashfile):
