@@ -33,21 +33,82 @@ def find_leaked_passwords(active_directory, leaked_directory):
 	#reading hashes from both directories
 	activedir_hashes = read_hashes_from_file(active_directory)#might need to change the name of this directory
 	pwned_hashes= read_hashes_from_file(leaked_directory)
-
+	conn = sqlite3.connect("hashes.sqlite3")
+	cursor = conn.cursor()
+	# parse HaveIBeenP0wned into sqlite
+	for eachhash in pwned_hashes:
+		parsed_array = eachhash.split(":")
+		if (parsed_array[0] == "des-cbc-md5"):
+			cursor.execute('''
+			INSERT INTO userhash (hash, algo)
+			VALUES ("''' + parsed_array[1] + '''", 1)
+			''')
+		else:
+			cursor.execute('''
+			INSERT INTO userhash (hash, algo)
+			VALUES ("''' + parsed_array[0] + '''", 2)
+			''')
+	conn.commit()
+	conn.close()
    
    
-	print(f"Active Directory Hashes: {activedir_hashes}")
-	print(f"Pwned Directory Hashes: {pwned_hashes}")
-#this should find the common hashes between the two directories
+	# print(f"Active Directory Hashes: {activedir_hashes}")
+	# print(f"Pwned Directory Hashes: {pwned_hashes}")
+   #this should find the common hashes between the two directories
 	common_hashes = list(activedir_hashes.intersection(pwned_hashes))
 	return common_hashes
+	
+def create_database(db_name):
+    # Check if the database already exists
+    if os.path.exists(db_name):
+        print(f"Database '{db_name}' already exists. Skipping creation.")
+        return
+    
+    # Connect to the database (will create the database if it does not exist)
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
+    
+    # Create the cryptalgo table
+    cursor.execute('''
+    CREATE TABLE cryptalgo (
+        id INTEGER PRIMARY KEY,
+        algo VARCHAR
+    )
+    ''')
+    
+    # Create the userhash table
+    cursor.execute('''
+    CREATE TABLE userhash (
+        id INTEGER PRIMARY KEY,
+        username VARCHAR,
+        hash VARCHAR,
+        algo INT
+    )
+    ''')
+    
+    cursor.execute('''
+	INSERT INTO cryptalgo (id, algo)
+	VALUES (1, "des-cbc-md5")
+    ''')
+    
+    cursor.execute('''
+	INSERT INTO cryptalgo (id, algo)
+	VALUES (2, "des")
+    ''')
+    # Commit the changes and close the connection
+    conn.commit()
+    conn.close()
+    
+    print(f"Database '{db_name}' created with tables 'cryptalgo' and 'userhash'.")
 
 def main():
+	print("Creating the database")
+	create_database("hashes.sqlite3")
 
 	print("running the main function")
 	#user input the directory path, incase each user has a different path
-	active_directory = input("Enter the path to file1:  ").strip() #need to come back and change name
-	leaked_directory = input("Enter the path to the file2:  ").strip()
+	active_directory = "testad.txt" #  input("Enter the path to file1:  ").strip() #need to come back and change name
+	leaked_directory = "testpwned.txt" # input("Enter the path to the file2:  ").strip()
 
 	active_directory = os.path.abspath(active_directory)
 	leaked_directory = os.path.abspath(leaked_directory)
